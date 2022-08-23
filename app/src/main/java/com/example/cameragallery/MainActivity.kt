@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
 import androidx.compose.foundation.BorderStroke
@@ -58,18 +59,26 @@ class MainActivity : ComponentActivity() {
                         result = it
                     }
                 val selectGallery =
-                    rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
+                    rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) {
                         result = BitmapFactory.decodeStream(it?.let { uri ->
                             contentResolver.openInputStream(uri)
                         })
-                        file = copyFileToInternalStorage(it!!).toString()
-                        Log.d("showfile", file.toString())
+                        it?.let { file = copyFileToInternalStorage(it).toString() }
+                        // Log.d("showfile", file)
                     }
+                /*For Multiple Photo selection */
+//                rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(2)) {
+//                    result = BitmapFactory.decodeStream(it.let { uri ->
+//                        contentResolver.openInputStream(uri[0])
+//                    })
+//                    it.let { file = copyFileToInternalStorage(it[0]).toString() }
+//                    // Log.d("showfile", file)
+//                }
                 AddButton("Open Camera") {
                     takePicture.launch()
                 }
                 AddButton("Open Gallery") {
-                    selectGallery.launch("*/*")
+                    selectGallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
                 }
                 AddButton("Share Doc") {
                     val shareIntent = Intent(Intent.ACTION_SEND)
@@ -111,7 +120,9 @@ class MainActivity : ComponentActivity() {
         Button(
             onClick = { onClick() },
             shape = Shapes.medium,
-            modifier = Modifier.fillMaxWidth().padding(10.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
         ) {
             Text(
                 text = text,
@@ -126,7 +137,9 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun AddImageView(bitmap: Bitmap?) {
         Card(
-            modifier = Modifier.wrapContentSize().padding(10.dp),
+            modifier = Modifier
+                .wrapContentSize()
+                .padding(10.dp),
             backgroundColor = Color.Magenta,
             elevation = 2.dp,
             border = BorderStroke(2.dp, Color.Green),
@@ -137,10 +150,13 @@ class MainActivity : ComponentActivity() {
                     bitmap = it.asImageBitmap(),
                     contentDescription = "",
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(120.dp).clip(CircleShape).border(
-                        2.dp, Color.Black,
-                        CircleShape
-                    )
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
+                        .border(
+                            2.dp, Color.Black,
+                            CircleShape
+                        )
                 )
             }
         }
